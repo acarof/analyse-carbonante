@@ -4,12 +4,11 @@ import os
 
 name = 'test'
 
-traj_path = 'tests/T1000-5step.xyz'
-#traj_path = '/Users/acarof/SIMULATIONS/DARIO/CO2-T1000/scratchfiles/Li2CO3-K2CO3.xyz'
-traj_path = 'tests/'
+
+traj_path = ''
 traj_name = 'Li2CO3-K2CO3'
 data_path = 'data-%s' % name
-#traj_path = 'tests//Li2CO3-K2CO3.xyz'
+
 #properties = ['index-co2']
 properties = ['energetics']
 
