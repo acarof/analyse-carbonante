@@ -1,8 +1,12 @@
 from utils import *
 import scipy.sparse.csgraph
 import os
+import sys
 
-name = 'test'
+try:
+    name = sys.argv[1]
+except:
+    name = 'test'
 
 
 traj_path = ''
