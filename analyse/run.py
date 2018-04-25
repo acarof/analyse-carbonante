@@ -123,11 +123,12 @@ class Carbonates(MDTraj):
     def print_properties(self, properties, data_path):
         #self.print_kind_molecules()
         #print self.time_vs_molecule
-        for property in properties:
-            if property == 'energetics':
-                os.system('cp %s-1.ener %s/' % (self.path, data_path))
+        pass
 
+    def print_energetics(self, data_path):
+        os.system('cp %s-1.ener %s/' % (self.path, data_path))
 
 traj = Carbonates(traj_path + traj_name)
 #traj.analyse_timestep()
-traj.print_properties(properties, data_path)
+#traj.print_properties(properties, data_path)
+traj.print_energetics(data_path)
