@@ -1,7 +1,6 @@
 from utils import *
 import scipy.sparse.csgraph
-import os
-import sys
+import os, sys, time
 
 try:
     name = sys.argv[1]
@@ -14,7 +13,7 @@ traj_name = 'Li2CO3-K2CO3'
 data_path = 'data-%s' % name
 
 #properties = ['index-co2']
-properties = ['energetics']
+#properties = ['energetics']
 
 if not os.path.isdir(data_path):
     os.mkdir(data_path)
@@ -52,7 +51,7 @@ class Carbonates(MDTraj):
         free_cut  = 1.7
         for index_c in self.types['C']:
             carbon = self.atom_list[index_c]
-            coord = 0
+            #print carbon.distances
             for index_o in self.types['O']:
                 oxygen = self.atom_list[index_o]
                 if index_o in carbon.was_connected:
@@ -103,15 +102,28 @@ class Carbonates(MDTraj):
                 self.time_vs_molecule[kind] = []
 
     def calculate_properties(self):
+        #start = time.time()
         self.find_distances()
+        #end = time.time()
+        #print "distance", (start -end)
+        #start = time.time()
         self.find_connectivity_carbonates()
+        #end = time.time()
+        #print "connectivity", (start -end)
+        #start = time.time()
         self.find_molecules()
+        #end = time.time()
+        #print "find mol", (start -end)
+        #start = time.time()
         self.name_molecules()
+        #end = time.time()
+        #print "name mol", (start -end)
         self.time_vs_molecule[self.times[-1]] = self.types_molecules
 
 
-    def print_kind_molecules(self):
-        with open('kind.dat', 'w') as file_:
+
+    def print_kind_molecules(self, data_path):
+        with open('%s/kind_molecules.dat' % data_path, 'w') as file_:
             file_.write('Time %s\n' % '  '.join(self.all_species))
             for time in sorted(self.time_vs_molecule):
                 string = ' %s ' % time
@@ -120,8 +132,8 @@ class Carbonates(MDTraj):
                 file_.write(string + '\n')
 
 
-    def print_properties(self, properties, data_path):
-        #self.print_kind_molecules()
+    def print_properties(self, data_path):
+        self.print_kind_molecules(data_path)
         #print self.time_vs_molecule
         pass
 
@@ -129,6 +141,6 @@ class Carbonates(MDTraj):
         os.system('cp %s-1.ener %s/' % (self.path, data_path))
 
 traj = Carbonates(traj_path + traj_name)
-#traj.analyse_timestep()
-#traj.print_properties(properties, data_path)
+traj.analyse_timestep(frequency=10) # analyse every 10 steps
+traj.print_properties(data_path)
 traj.print_energetics(data_path)
