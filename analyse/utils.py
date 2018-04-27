@@ -52,11 +52,11 @@ class MDTraj(object):
                     else:
                         self.types[label].append(index)
 
-                start = time.time()
+                #start = time.time()
                 if step%frequency == 0:
                     self.calculate_properties()
-                end = time.time()
-                print "total one timestep", (end - start)
+                #end = time.time()
+                #print "total one timestep", (end - start)
 
                 blah = traj.readline()
                 #raise SystemExit

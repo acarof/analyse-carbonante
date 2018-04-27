@@ -30,6 +30,7 @@ class Carbonates(MDTraj):
         super(Carbonates, self).__init__(path)
         self.lbox = 22.23
         self.time_vs_molecule = {}
+        self.all_species = []
 
     def update_label_co2(self):
         molcut = 1.75
@@ -78,10 +79,12 @@ class Carbonates(MDTraj):
             self.list_molecules.append( Molecule() )
         for index, element in enumerate(array.tolist()):
             self.list_molecules[element].belongs.append(index)
+        #for molecule in self.list_molecules:
+        #    if len(molecule.belongs) == 5:
+        #        print molecule.belongs
 
     def name_molecules(self):
         self.types_molecules = {}
-        self.all_species = []
         for molecule in self.list_molecules:
             raw_label = ''
             for index_atom in molecule.belongs:
@@ -93,6 +96,7 @@ class Carbonates(MDTraj):
                 self.types_molecules[molecule.label] += 1
             if molecule.label not in self.all_species:
                 self.all_species.append(molecule.label)
+        #print self.all_species
 
 
 
