@@ -6,7 +6,10 @@ try:
     name = sys.argv[1]
 except:
     name = 'test'
-
+try:
+    frequency = int(sys.argv[1])
+except:
+    frequency = 1
 
 traj_path = ''
 traj_name = 'Li2CO3-K2CO3'
@@ -145,6 +148,6 @@ class Carbonates(MDTraj):
         os.system('cp %s-1.ener %s/' % (self.path, data_path))
 
 traj = Carbonates(traj_path + traj_name)
-traj.analyse_timestep(frequency=10) # analyse every 10 steps
+traj.analyse_timestep(frequency=frequency) # analyse every 10 steps
 traj.print_properties(data_path)
 traj.print_energetics(data_path)
