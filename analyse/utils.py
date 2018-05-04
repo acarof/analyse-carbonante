@@ -10,6 +10,7 @@ class atom(object):
         self.distances = []
         self.connected = []
         self.was_connected = []
+        self.previous_pos = []
 
     def update_pos(self, xyz):
         self.positions = xyz

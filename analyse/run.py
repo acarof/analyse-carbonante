@@ -34,6 +34,7 @@ class Carbonates(MDTraj):
         self.lbox = 22.23
         self.time_vs_molecule = {}
         self.all_species = []
+        self.msd = {}
 
     def update_label_co2(self):
         molcut = 1.75
@@ -101,6 +102,32 @@ class Carbonates(MDTraj):
                 self.all_species.append(molecule.label)
         #print self.all_species
 
+    def calculate_msd(self, list_atoms):
+        for atom in self.atom_list:
+            if atom.label in list_atoms:
+                if self.msd.get(atom.label) is None:
+                    self.msd[atom.label] = {
+                        0.0 : {
+                            'distance' : 0.0,
+                            'counter'  : 1,
+                        }
+                    }
+
+
+                for previous in atom.previous_pos:
+                    time = previous[0]
+                    vect = atom.positions - previous[1]
+                    if self.msd[atom.label].get(self.times[-1] - time) is None:
+                        self.msd[atom.label][ self.times[-1] - time] = {
+                            'distance' : 0.0,
+                            'counter'  : 0,
+                        }
+                    self.msd[atom.label][self.times[-1] - time ]['distance'] += np.linalg.norm(vect)**2
+                    self.msd[atom.label][self.times[-1] - time]['counter' ] += 1
+                atom.previous_pos.append( (self.times[-1], atom.positions) )
+        #print self.msd
+
+
 
 
     def extract_molecule_kind(self):
@@ -125,6 +152,7 @@ class Carbonates(MDTraj):
         self.name_molecules()
         #end = time.time()
         #print "name mol", (start -end)
+        self.calculate_msd(['C', 'Li', 'K'])
         self.time_vs_molecule[self.times[-1]] = self.types_molecules
 
 
@@ -138,9 +166,20 @@ class Carbonates(MDTraj):
                     string += '  %s   ' % self.time_vs_molecule[time].get(specy, 0)
                 file_.write(string + '\n')
 
+    def print_msd(self, data_path):
+        for atom in self.msd:
+            with open('%s/MSD_%s.dat' % (data_path, atom), 'w') as file_:
+                file_.write('Time  MSD\n')
+                for time in sorted(self.msd[atom]):
+                    msd = self.msd[atom][time]['distance'] / self.msd[atom][time]['counter']
+                    string = '%s  %s\n' % (time, msd)
+                    file_.write(string)
+
+
 
     def print_properties(self, data_path):
         self.print_kind_molecules(data_path)
+        self.print_msd(data_path)
         #print self.time_vs_molecule
         pass
 
