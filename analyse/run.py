@@ -7,7 +7,7 @@ try:
 except:
     name = 'test'
 try:
-    frequency = int(sys.argv[1])
+    frequency = int(sys.argv[2])
 except:
     frequency = 1
 
@@ -112,8 +112,6 @@ class Carbonates(MDTraj):
                             'counter'  : 1,
                         }
                     }
-
-
                 for previous in atom.previous_pos:
                     time = previous[0]
                     vect = atom.positions - previous[1]
@@ -152,7 +150,8 @@ class Carbonates(MDTraj):
         self.name_molecules()
         #end = time.time()
         #print "name mol", (start -end)
-        self.calculate_msd(['C', 'Li', 'K'])
+        if self.times[-1]%50.0 == 0:
+            self.calculate_msd(['C', 'Li', 'K'])
         self.time_vs_molecule[self.times[-1]] = self.types_molecules
 
 
