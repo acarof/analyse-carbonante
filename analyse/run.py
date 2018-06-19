@@ -33,6 +33,7 @@ class Carbonates(MDTraj):
         super(Carbonates, self).__init__(path)
         self.lbox = 22.23
         self.time_vs_molecule = {}
+        self.time_vs_specific_molecules = {}
         self.all_species = []
         self.msd = {}
 
@@ -128,10 +129,11 @@ class Carbonates(MDTraj):
 
 
 
-    def extract_molecule_kind(self):
-        for kind in self.types_molecules:
-            if self.time_vs_molecule.get(kind) is None:
-                self.time_vs_molecule[kind] = []
+    def identify_molecule(self, *args):
+        self.specific_molecules = []
+        for molecule in self.list_molecules:
+            if molecule.label in args:
+                self.specific_molecules.append( (molecule.label, molecule.belongs) )
 
     def calculate_properties(self):
         #start = time.time()
@@ -148,13 +150,23 @@ class Carbonates(MDTraj):
         #print "find mol", (start -end)
         #start = time.time()
         self.name_molecules()
+        self.identify_molecule( 'COO', 'CCOOOOO')
         #end = time.time()
         #print "name mol", (start -end)
         if self.times[-1]%50.0 == 0:
             self.calculate_msd(['C', 'Li', 'K'])
         self.time_vs_molecule[self.times[-1]] = self.types_molecules
+        self.time_vs_specific_molecules[self.times[-1]] = self.specific_molecules
 
 
+    def print_specific_molecules(self, *args):
+        with open('%s/specific_molecules.dat' % data_path, 'w') as file_:
+            file_.write('Time Molecule Index\n')
+            for time in sorted(self.time_vs_specific_molecules):
+                if self.time_vs_specific_molecules[time] != []:
+                    for mol in self.time_vs_specific_molecules[time]:
+                        string = '%s  %s  %s ' % (time, mol[0], ' '.join(map(str, mol[1])))
+                        file_.write(string + '\n')
 
     def print_kind_molecules(self, data_path):
         with open('%s/kind_molecules.dat' % data_path, 'w') as file_:
@@ -178,6 +190,7 @@ class Carbonates(MDTraj):
 
     def print_properties(self, data_path):
         self.print_kind_molecules(data_path)
+        self.print_specific_molecules(data_path)
         self.print_msd(data_path)
         #print self.time_vs_molecule
         pass
