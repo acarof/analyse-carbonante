@@ -49,6 +49,13 @@ class Carbonates(MDTraj):
             carbon.was_connected = carbon.connected
             #print carbon.connected
 
+    def find_o_star(self):
+        for index in self.types_mol['O_CCOOOOO']:
+            if len(self.atom_list[index].connected) == 3:
+                self.atom_list[index].label_mol = 'O_STAR'
+                self.types_mol['O_STAR'] = [index]
+                self.types_mol['O_CCOOOOO'].remove(index)
+
     def calculate_properties(self):
         self.find_distances()
         self.find_connectivity_carbonates()
@@ -56,7 +63,11 @@ class Carbonates(MDTraj):
         self.name_molecules()
         self.identify_molecule( 'COO', 'CCOOOOO')
         self.find_types_mol()
-        self.calculate_rdf('Li', 'K')
+        self.find_o_star()
+        for i, label1 in enumerate(self.types_mol):
+            for j in range(i, len(self.types_mol)):
+                label2 = self.types_mol.keys()[j]
+                self.calculate_rdf(label1, label2)
         if self.times[-1]%50.0 == 0:
             self.calculate_msd(['C', 'Li', 'K'])
         self.time_vs_molecule[self.times[-1]] = self.types_molecules

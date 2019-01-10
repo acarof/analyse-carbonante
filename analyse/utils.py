@@ -149,18 +149,19 @@ class MDTraj(object):
         rdf = np.zeros(nbins)
         #dr = length / nbins
         natom_pairs = 0
-        for index1 in self.types_mol[label1]:
-            for index2 in self.types_mol[label2]:
+        for index1 in self.types_mol.get(label1, []):
+            for index2 in self.types_mol.get(label2, []):
                 int_ = int( np.rint( self.atom_list[index1].distances[index2] / dr ) )
                 if int_ < nbins:
                     rdf[int_] += 1
                 natom_pairs += 1
-        if self.rdf.get((label1, label2)) is None:
-            bins = dr * np.array(range(nbins))
-            self.rdf[(label1, label2)] = [rdf, 1, bins, dr,  natom_pairs]
-        else:
-            self.rdf[(label1, label2)][0] += rdf
-            self.rdf[(label1, label2)][1] += 1
+        if natom_pairs > 0:
+            if self.rdf.get(frozenset((label1, label2))) is None:
+                bins = dr * np.array(range(nbins))
+                self.rdf[frozenset((label1, label2))] = [rdf, 1, bins, dr,  natom_pairs]
+            else:
+                self.rdf[frozenset((label1, label2))][0] += rdf
+                self.rdf[frozenset((label1, label2))][1] += 1
 
     def calculate_msd(self, list_atoms):
         for atom in self.atom_list:
@@ -217,7 +218,10 @@ class MDTraj(object):
 
     def print_rdf(self, data_path):
         for pair in self.rdf:
-            with open('%s/RDF_%s.dat' % (data_path, '_'.join(pair)), 'w') as f:
+            title = pair
+            if len(pair) == 1:
+                title = tuple(pair) * 2
+            with open('%s/RDF_%s.dat' % (data_path, '_'.join(title)), 'w') as f:
                 f.write('R   RDF\n')
                 rdf = self.rdf[pair][0]
                 count = self.rdf[pair][1]
