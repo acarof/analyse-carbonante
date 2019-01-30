@@ -222,10 +222,16 @@ class Carbonates(MDTraj):
             pos = self.atom_list[at].positions - mean
             pos = np.array([x - self.lbox * np.rint(x / self.lbox) for x in pos])
             rho_bin = int( np.rint( np.linalg.norm( np.cross(u, pos)) / dr) )
-            zeta_bin = int( np.rint( np.dot(u, pos) ) )
-            print at, rho_bin, zeta_bin
-            if (rho_bin < nbins) and zeta_bin < nbins:
-                self.map['pyro'][label][rho_bin, zeta_bin] += 1
+            zeta_bin = int( np.rint( np.dot(u, pos) / dr ) )
+            #if rho_bin*dr < 2:
+                #print 'u', u
+                #print 'pos', pos
+                #print 'norm', np.linalg.norm(pos)
+                #print (rho_bin*dr)**2 + (zeta_bin*dr)**2
+                #print at, 'rho', rho_bin*dr, 'zeta', zeta_bin*dr
+            #print at, 'rho_bin', rho_bin
+            if (rho_bin < nbins) and (zeta_bin + int(np.rint(nbins/2))) < nbins:
+                self.map['CO2'][label][rho_bin, zeta_bin + int(np.rint(nbins/2))] += 1
 
 
 
