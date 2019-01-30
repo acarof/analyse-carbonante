@@ -146,94 +146,23 @@ class Carbonates(MDTraj):
                         f.write('%s\n' % '  '.join(map(str, line)))
 
 
-
-    def calculate_map_co(self, label):
+    def _determine_map(self, mol, label, indexes):
         dr = 0.1
         nbins = int(self.lbox/(2*dr))
-        if self.map.get('CO') is None:
-            self.map['CO'] = {}
-
-        if self.map['CO'].get(label) is None:
-            self.map['CO'][label] = np.zeros( (nbins, nbins) )
-
-        c_index = self.types_mol['C_CO'][0]
-        o_index = self.types_mol['O_CO'][0]
-        u = (self.atom_list[o_index].positions - self.atom_list[c_index].positions)
+        if self.map.get(mol) is None:
+            self.map[mol] = {}
+        if self.map[mol].get(label) is None:
+            self.map[mol][label] = np.zeros( (nbins, nbins) )
+        u = (self.atom_list[indexes[0]].positions - self.atom_list[indexes[1]].positions)
         u = u / np.linalg.norm(u)
-        mean = (self.atom_list[o_index].positions + self.atom_list[c_index].positions)/2
-
+        mean = (self.atom_list[indexes[0]].positions + self.atom_list[indexes[1]].positions)/2
         for at in self.types_mol[label]:
             pos = self.atom_list[at].positions - mean
             pos = np.array([x - self.lbox * np.rint(x / self.lbox) for x in pos])
             rho_bin = int( np.rint( np.linalg.norm( np.cross(u, pos)) / dr) )
             zeta_bin = int( np.rint( np.dot(u, pos) / dr ) )
-            if (rho_bin < nbins) and (zeta_bin + int(np.rint(nbins/2))) < nbins:
-                self.map['CO'][label][rho_bin, zeta_bin + int(np.rint(nbins/2))] += 1
-
-
-
-    def calculate_map_coo(self, label):
-        dr = 0.1
-        nbins = int(self.lbox/(2*dr))
-        if self.map.get('CO2') is None:
-            self.map['CO2'] = {}
-
-        if self.map['CO2'].get(label) is None:
-            self.map['CO2'][label] = np.zeros( (nbins, nbins) )
-
-        o_indexes = self.types_mol['O_COO']
-        #print o_indexes
-        u = (self.atom_list[o_indexes[0]].positions - self.atom_list[o_indexes[1]].positions)
-        #print  np.linalg.norm(u)
-        u = u / np.linalg.norm(u)
-        mean = (self.atom_list[o_indexes[0]].positions + self.atom_list[o_indexes[1]].positions)/2
-
-        for at in self.types_mol[label]:
-            pos = self.atom_list[at].positions - mean
-            pos = np.array([x - self.lbox * np.rint(x / self.lbox) for x in pos])
-            rho_bin = int( np.rint( np.linalg.norm( np.cross(u, pos)) / dr) )
-            zeta_bin = int( np.rint( np.dot(u, pos) / dr ) )
-            #if rho_bin*dr < 2:
-                #print 'u', u
-                #print 'pos', pos
-                #print 'norm', np.linalg.norm(pos)
-                #print (rho_bin*dr)**2 + (zeta_bin*dr)**2
-                #print at, 'rho', rho_bin*dr, 'zeta', zeta_bin*dr
-            #print at, 'rho_bin', rho_bin
-            if (rho_bin < nbins) and (zeta_bin + int(np.rint(nbins/2))) < nbins:
-                self.map['CO2'][label][rho_bin, zeta_bin + int(np.rint(nbins/2))] += 1
-
-
-    def calculate_map_pyro(self, label):
-        dr = 0.1
-        nbins = int(self.lbox/(2*dr))
-        if self.map.get('pyro') is None:
-            self.map['pyro'] = {}
-
-        if self.map['pyro'].get(label) is None:
-            self.map['pyro'][label] = np.zeros( (nbins, nbins) )
-
-        c_indexes = self.types_mol['C_CCOOOOO']
-        u = (self.atom_list[c_indexes[0]].positions - self.atom_list[c_indexes[1]].positions)
-        u = u / np.linalg.norm(u)
-        mean = (self.atom_list[c_indexes[0]].positions + self.atom_list[c_indexes[1]].positions)/2
-
-        for at in self.types_mol[label]:
-            pos = self.atom_list[at].positions - mean
-            pos = np.array([x - self.lbox * np.rint(x / self.lbox) for x in pos])
-            rho_bin = int( np.rint( np.linalg.norm( np.cross(u, pos)) / dr) )
-            zeta_bin = int( np.rint( np.dot(u, pos) / dr ) )
-            #if rho_bin*dr < 2:
-                #print 'u', u
-                #print 'pos', pos
-                #print 'norm', np.linalg.norm(pos)
-                #print (rho_bin*dr)**2 + (zeta_bin*dr)**2
-                #print at, 'rho', rho_bin*dr, 'zeta', zeta_bin*dr
-            #print at, 'rho_bin', rho_bin
-            if (rho_bin < nbins) and (zeta_bin + int(np.rint(nbins/2))) < nbins:
-                self.map['CO2'][label][rho_bin, zeta_bin + int(np.rint(nbins/2))] += 1
-
-
+            if (rho_bin < nbins) and np.abs(zeta_bin + int(np.rint(nbins/2))) < nbins:
+                self.map[mol][label][rho_bin, zeta_bin + int(np.rint(nbins/2))] += 1
 
     def calculate_properties(self):
         self.find_distances()
@@ -249,15 +178,20 @@ class Carbonates(MDTraj):
             self.calculate_local_pyro()
         elif 'CO' in self.types_molecules:
             self.calculate_local_co()
+
         if 'COO' in self.types_molecules:
+            o_indexes = self.types_mol['O_COO']
             for s in ['C_COOO', 'O_COOO', 'Li', 'K']:
-                self.calculate_map_coo(s)
+                self._determine_map('CO2', s, o_indexes)
         elif 'CCOOOOO' in self.types_molecules:
+            c_indexes = self.types_mol['C_CCOOOOO']
             for s in ['C_COOO', 'O_COOO', 'Li', 'K']:
-                self.calculate_map_pyro(s)
+                self._determine_map('pyro', s, c_indexes)
         elif 'CO' in self.types_molecules:
+            c_index = self.types_mol['C_CO'][0]
+            o_index = self.types_mol['O_CO'][0]
             for s in ['C_COOO', 'O_COOO', 'Li', 'K']:
-                self.calculate_map_co(s)
+                self._determine_map('pyro', s, [c_index, o_index])
         if self.times[-1] % 50.0 == 0:
             for i, label1 in enumerate(self.types_mol):
                 for j in range(i, len(self.types_mol)):
