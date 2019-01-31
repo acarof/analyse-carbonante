@@ -35,6 +35,7 @@ class Carbonates(MDTraj):
     def find_connectivity_carbonates(self):
         bound_cut = 1.9
         free_cut  = 1.7
+        c_done = []
         for index_c in self.types['C']:
             carbon = self.atom_list[index_c]
             #print carbon.distances
@@ -49,6 +50,17 @@ class Carbonates(MDTraj):
                     if carbon.distances[index_o] < free_cut:
                         carbon.connected.append(index_o)
                         oxygen.connected.append(index_c)
+            c_done.append(index_c)
+            for index_c2 in [j for j in self.types['C'] if j not in c_done]:
+                carbon2 = self.atom_list[index_c2]
+                if index_c2 in carbon.was_connected:
+                    if carbon.distances[index_c2] < bound_cut:
+                        carbon.connected.append(index_c2)
+                        carbon2.connected.apppend(index_c)
+                else:
+                    if carbon.distances[index_c2] < free_cut:
+                        carbon.connected.append(index_c2)
+                        carbon2.connected.append(index_c)
             carbon.was_connected = carbon.connected
             #print carbon.connected
 
@@ -91,7 +103,6 @@ class Carbonates(MDTraj):
         o_star_index = self.types_mol['O_STAR'][0]
         o_indexes = self.types_mol['O_CCOOOOO']
         c_indexes = self.types_mol['C_CCOOOOO']
-
         o_dict = {}
         for c in c_indexes:
             l = [float(self.atom_list[o].distances[c]) for o in o_indexes]
@@ -99,7 +110,6 @@ class Carbonates(MDTraj):
             o_dict[c] = []
             for val in lsorted[0:2]:
                 o_dict[c].append(o_indexes[l.index(val)])
-
         angle_coso = self._calculate_angle(c_indexes[0], o_star_index, c_indexes[1])
         angle_oco_s = []
         angle_ocos_s = []
@@ -108,7 +118,6 @@ class Carbonates(MDTraj):
             angle_oco_s.append(self._calculate_angle(val[0], c, val[1]))
             for o in val:
                 angle_ocos_s.append(self._calculate_angle(o, c, o_star_index))
-
         d_cc = self.atom_list[c_indexes[0]].distances[c_indexes[1]]
         d_cos_s = []
         for c in c_indexes:
@@ -118,7 +127,6 @@ class Carbonates(MDTraj):
             val = o_dict[c]
             for o in val:
                 d_co_s.append(self.atom_list[c].distances[o])
-
         if self.local_structure.get('CCOOOOO') is None:
             self.local_structure['CCOOOOO'] = [['Timestep',] + ['DistanceC-C', ] +
                                                ['DistanceC-O']*len(d_co_s) +
@@ -128,6 +136,39 @@ class Carbonates(MDTraj):
                                                ['AngleO-C-Os'] * len(angle_ocos_s)]
         self.local_structure['CCOOOOO'].append([self.times[-1], d_cc] +
                                                d_co_s + d_cos_s + [angle_coso,] + angle_ocos_s + angle_oco_s)
+
+    def calculate_local_oxa(self):
+        o_indexes = self.types_mol['O_CCOOOO']
+        c_indexes = self.types_mol['C_CCOOOO']
+        o_dict = {}
+        for c in c_indexes:
+            l = [float(self.atom_list[o].distances[c]) for o in o_indexes]
+            lsorted = sorted(l)
+            o_dict[c] = []
+            for val in lsorted[0:2]:
+                o_dict[c].append(o_indexes[l.index(val)])
+        angle_oco_s = []
+        for c in o_dict:
+            val = o_dict[c]
+            angle_oco_s.append(self._calculate_angle(val[0], c, val[1]))
+        angle_cco_s = []
+        for c in c_indexes:
+            other_c = [i for i in c_indexes if i != c][0]
+            for o in o_dict[c]:
+                angle_cco_s.append(self._calculate_angle(other_c, c, o))
+        d_cc = self.atom_list[c_indexes[0]].distances[c_indexes[1]]
+        d_co_s = []
+        for c in o_dict:
+            val = o_dict[c]
+            for o in val:
+                d_co_s.append(self.atom_list[c].distances[o])
+        if self.local_structure.get('CCOOOO') is None:
+            self.local_structure['CCOOOO'] = [['Timestep',] + ['DistanceC-C', ] +
+                                               ['DistanceC-O']*len(d_co_s) +
+                                               ['AngleO-C-O'] * len(angle_oco_s) +
+                                               ['AngleO-C-C'] * len(angle_cco_s)]
+        self.local_structure['CCOOOO'].append([self.times[-1], d_cc] +
+                                               d_co_s + angle_oco_s + angle_cco_s)
 
 
 
@@ -179,6 +220,8 @@ class Carbonates(MDTraj):
             self.calculate_local_pyro()
         elif 'CO' in self.types_molecules:
             self.calculate_local_co()
+        elif 'CCOOOO' in self.types_molecules:
+            self.calculate_local_oxa()
 
         if 'COO' in self.types_molecules:
             o_indexes = self.types_mol['O_COO']
@@ -193,6 +236,10 @@ class Carbonates(MDTraj):
             o_index = self.types_mol['O_CO'][0]
             for s in ['C_COOO', 'O_COOO', 'Li', 'K']:
                 self._determine_map('CO', s, [c_index, o_index])
+        elif 'CCOOOO' in self.types_molecules:
+            c_indexes = self.types_mol['C_CCOOOO']
+            for s in ['C_COOO', 'O_COOO', 'Li', 'K']:
+                self._determine_map('oxa', s, c_indexes)
         if self.times[-1] % 50.0 == 0:
             for i, label1 in enumerate(self.types_mol):
                 for j in range(i, len(self.types_mol)):
