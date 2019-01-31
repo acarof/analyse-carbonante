@@ -85,7 +85,7 @@ class Carbonates(MDTraj):
     def _calculate_angle(self, i,j,k):
         return calculate_angle(self.atom_list[i].positions,
                                self.atom_list[j].positions,
-                               self.atom_list[k].positions)
+                               self.atom_list[k].positions, self.lbox )
 
     def calculate_local_pyro(self):
         o_star_index = self.types_mol['O_STAR'][0]
@@ -154,6 +154,7 @@ class Carbonates(MDTraj):
         if self.map[mol].get(label) is None:
             self.map[mol][label] = np.zeros( (nbins, nbins) )
         u = (self.atom_list[indexes[0]].positions - self.atom_list[indexes[1]].positions)
+        u = np.array([x - self.lbox * np.rint(x / self.lbox) for x in u])
         u = u / np.linalg.norm(u)
         mean = (self.atom_list[indexes[0]].positions + self.atom_list[indexes[1]].positions)/2
         for at in self.types_mol[label]:
@@ -191,7 +192,7 @@ class Carbonates(MDTraj):
             c_index = self.types_mol['C_CO'][0]
             o_index = self.types_mol['O_CO'][0]
             for s in ['C_COOO', 'O_COOO', 'Li', 'K']:
-                self._determine_map('pyro', s, [c_index, o_index])
+                self._determine_map('CO', s, [c_index, o_index])
         if self.times[-1] % 50.0 == 0:
             for i, label1 in enumerate(self.types_mol):
                 for j in range(i, len(self.types_mol)):

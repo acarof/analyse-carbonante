@@ -4,9 +4,11 @@ import time
 import scipy.sparse.csgraph
 
 
-def calculate_angle(r1, r2, r3):
+def calculate_angle(r1, r2, r3, lbox):
     vect1 = r1 - r2
+    vect1 = np.array([x - lbox * np.rint(x / lbox) for x in vect1])
     vect2 = r3 - r2
+    vect2 = np.array([x - lbox * np.rint(x / lbox) for x in vect2])
     d1 = np.power(np.sum(np.power(vect1, 2)), 0.5)
     d2 = np.power(np.sum(np.power(vect2, 2)), 0.5)
     dot = np.dot(vect1, vect2) / (d1 * d2)
