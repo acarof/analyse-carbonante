@@ -30,6 +30,7 @@ class Carbonates(MDTraj):
         self.msd = {}
         self.local_structure = {}
         self.map = {}
+        self.former_c_co2 = -1
 
 
     def find_connectivity_carbonates(self):
@@ -197,13 +198,18 @@ class Carbonates(MDTraj):
         u = (self.atom_list[indexes[0]].positions - self.atom_list[indexes[1]].positions)
         u = np.array([x - self.lbox * np.rint(x / self.lbox) for x in u])
         u = u / np.linalg.norm(u)
-        mean = (self.atom_list[indexes[0]].positions + self.atom_list[indexes[1]].positions)/2
+        vect1 = self.atom_list[indexes[0]].positions
+        vect1 += - self.lbox * np.rint(vect1 / self.lbox)
+        vect2 = self.atom_list[indexes[1]].positions
+        vect2 += - self.lbox * np.rint(vect2 / self.lbox)
+        mean = ( vect1 + vect2 )/2
+        #mean += - self.lbox * np.rint( mean/self.lbox)
         for at in self.types_mol[label]:
             pos = self.atom_list[at].positions - mean
             pos = np.array([x - self.lbox * np.rint(x / self.lbox) for x in pos])
             rho_bin = int( np.rint( np.linalg.norm( np.cross(u, pos)) / dr) )
             zeta_bin = int( np.rint( np.dot(u, pos) / dr ) )
-            if (rho_bin < nbins) and np.abs(zeta_bin + int(np.rint(nbins/2))) < nbins:
+            if (rho_bin < nbins) and  (0 < zeta_bin + int(np.rint(nbins/2)) < nbins) :
                 self.map[mol][label][rho_bin, zeta_bin + int(np.rint(nbins/2))] += 1
 
     def calculate_properties(self):
@@ -213,6 +219,8 @@ class Carbonates(MDTraj):
         self.name_molecules()
         self.identify_molecule( 'COO', 'CCOOOOO')
         self.find_types_mol()
+        if 'COO' in self.types_molecules:
+            self.former_c_co2 = self.types_mol['C_COO'][0]
         self.find_o_star()
         if 'COO' in self.types_molecules:
             self.calculate_local_coo()
@@ -229,6 +237,15 @@ class Carbonates(MDTraj):
                 self._determine_map('CO2', s, o_indexes)
         elif 'CCOOOOO' in self.types_molecules:
             c_indexes = self.types_mol['C_CCOOOOO']
+            if self.former_c_co2 > 0:
+                if self.former_c_co2 in c_indexes:
+                    c_new = [c for c in c_indexes if c != self.former_c_co2][0]
+                    c_indexes = [c_new, self.former_c_co2]
+                else:
+                    print "Problem with former_c_co2"
+                    print "c_indexes", c_indexes
+                    print "c_former", self.former_c_co2
+                    raise SystemExit
             for s in ['C_COOO', 'O_COOO', 'Li', 'K']:
                 self._determine_map('pyro', s, c_indexes)
         elif 'CO' in self.types_molecules:
