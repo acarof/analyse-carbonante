@@ -56,7 +56,7 @@ class Carbonates(MDTraj):
                 if index_c2 in carbon.was_connected:
                     if carbon.distances[index_c2] < bound_cut:
                         carbon.connected.append(index_c2)
-                        carbon2.connected.apppend(index_c)
+                        carbon2.connected.append(index_c)
                 else:
                     if carbon.distances[index_c2] < free_cut:
                         carbon.connected.append(index_c2)
