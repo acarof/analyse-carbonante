@@ -111,7 +111,7 @@ class Carbonates(MDTraj):
             o_dict[c] = []
             for val in lsorted[0:2]:
                 o_dict[c].append(o_indexes[l.index(val)])
-        angle_coso = self._calculate_angle(c_indexes[0], o_star_index, c_indexes[1])
+        angle_cosc = self._calculate_angle(c_indexes[0], o_star_index, c_indexes[1])
         angle_oco_s = []
         angle_ocos_s = []
         for c in o_dict:
@@ -136,7 +136,7 @@ class Carbonates(MDTraj):
                                                ['AngleO-C-O'] * len(angle_oco_s) +
                                                ['AngleO-C-Os'] * len(angle_ocos_s)]
         self.local_structure['CCOOOOO'].append([self.times[-1], d_cc] +
-                                               d_co_s + d_cos_s + [angle_coso,] + angle_ocos_s + angle_oco_s)
+                                               d_co_s + d_cos_s + [angle_cosc,] + angle_oco_s + angle_ocos_s)
 
     def calculate_local_oxa(self):
         o_indexes = self.types_mol['O_CCOOOO']
