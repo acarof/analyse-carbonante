@@ -100,6 +100,13 @@ class Carbonates(MDTraj):
                                self.atom_list[j].positions,
                                self.atom_list[k].positions, self.lbox )
 
+    def _calculate_dihedral(self, i,j,k,l):
+        return new_dihedral(self.atom_list[i].positions,
+                            self.atom_list[j].positions,
+                            self.atom_list[k].positions,
+                            self.atom_list[l].positions,
+                            self.lbox)
+
     def calculate_local_pyro(self):
         o_star_index = self.types_mol['O_STAR'][0]
         o_indexes = self.types_mol['O_CCOOOOO']
@@ -128,15 +135,24 @@ class Carbonates(MDTraj):
             val = o_dict[c]
             for o in val:
                 d_co_s.append(self.atom_list[c].distances[o])
+
+        dihedrs = []
+        for c in o_dict:
+            other_c = [i for i in o_dict if i != c][0]
+            val = o_dict[c]
+            for o in val:
+                dihedrs.append( self._calculate_dihedral(o, c, o_star_index, other_c) )
+
         if self.local_structure.get('CCOOOOO') is None:
             self.local_structure['CCOOOOO'] = [['Timestep',] + ['DistanceC-C', ] +
                                                ['DistanceC-O']*len(d_co_s) +
                                                ['DistanceC-Os']*len(d_cos_s) +
                                                ['AngleC-Os-C'] +
                                                ['AngleO-C-O'] * len(angle_oco_s) +
-                                               ['AngleO-C-Os'] * len(angle_ocos_s)]
+                                               ['AngleO-C-Os'] * len(angle_ocos_s) +
+                                               ['Dihedral'] * len(dihedrs)]
         self.local_structure['CCOOOOO'].append([self.times[-1], d_cc] +
-                                               d_co_s + d_cos_s + [angle_cosc,] + angle_oco_s + angle_ocos_s)
+                                               d_co_s + d_cos_s + [angle_cosc,] + angle_oco_s + angle_ocos_s + dihedrs)
 
     def calculate_local_oxa(self):
         o_indexes = self.types_mol['O_CCOOOO']
@@ -163,13 +179,23 @@ class Carbonates(MDTraj):
             val = o_dict[c]
             for o in val:
                 d_co_s.append(self.atom_list[c].distances[o])
+
+        dihedrs = []
+        this_c = c_indexes[0]
+        other_c = c_indexes[1]
+        for o in o_dict[this_c]:
+            for o2 in o_dict[other_c]:
+                dihedrs.append( self._calculate_dihedral(o, this_c, other_c, o2) )
+
+
         if self.local_structure.get('CCOOOO') is None:
             self.local_structure['CCOOOO'] = [['Timestep',] + ['DistanceC-C', ] +
                                                ['DistanceC-O']*len(d_co_s) +
                                                ['AngleO-C-O'] * len(angle_oco_s) +
-                                               ['AngleO-C-C'] * len(angle_cco_s)]
+                                               ['AngleO-C-C'] * len(angle_cco_s) +
+                                              ['Dihedral']*len(dihedrs)]
         self.local_structure['CCOOOO'].append([self.times[-1], d_cc] +
-                                               d_co_s + angle_oco_s + angle_cco_s)
+                                               d_co_s + angle_oco_s + angle_cco_s + dihedrs)
 
 
 
