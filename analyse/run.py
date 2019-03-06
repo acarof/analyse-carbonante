@@ -31,6 +31,7 @@ class Carbonates(MDTraj):
         self.local_structure = {}
         self.map = {}
         self.former_c_co2 = -1
+        self.reorient = {}
 
 
     def find_connectivity_carbonates(self):
@@ -238,6 +239,22 @@ class Carbonates(MDTraj):
             if (rho_bin < nbins) and  (0 < zeta_bin + int(np.rint(nbins/2)) < nbins) :
                 self.map[mol][label][rho_bin, zeta_bin + int(np.rint(nbins/2))] += 1
 
+    def _calculate_orientation(self, label, indexes):
+        u = (self.atom_list[indexes[0]].positions - self.atom_list[indexes[1]].positions)
+        u = np.array([x - self.lbox * np.rint(x / self.lbox) for x in u])
+        u = u / np.linalg.norm(u)
+        if self.reorient.get(label) is None:
+            self.reorient[label] = []
+        self.reorient[label].append( [self.times[-1]] +  list(u))
+
+    def print_reorient(self, data_path):
+        for label in self.reorient:
+            with open('%s/reorient_%s.dat' % (data_path, label), 'w') as f:
+                f.write('Time   u_x   u_y   u_z\n')
+                for line in self.reorient[label]:
+                    f.write('%s\n' % '  '.join(map(str, line)))
+
+
     def calculate_properties(self):
         self.find_distances()
         self.find_connectivity_carbonates()
@@ -261,6 +278,7 @@ class Carbonates(MDTraj):
             o_indexes = self.types_mol['O_COO']
             for s in ['C_COOO', 'O_COOO', 'Li', 'K']:
                 self._determine_map('CO2', s, o_indexes)
+            self._calculate_orientation('CO2', o_indexes)
         elif 'CCOOOOO' in self.types_molecules:
             c_indexes = self.types_mol['C_CCOOOOO']
             if self.former_c_co2 > 0:
@@ -274,15 +292,18 @@ class Carbonates(MDTraj):
                     raise SystemExit
             for s in ['C_COOO', 'O_COOO', 'Li', 'K']:
                 self._determine_map('pyro', s, c_indexes)
+            self._calculate_orientation('pyro', c_indexes)
         elif 'CO' in self.types_molecules:
             c_index = self.types_mol['C_CO'][0]
             o_index = self.types_mol['O_CO'][0]
             for s in ['C_COOO', 'O_COOO', 'Li', 'K']:
                 self._determine_map('CO', s, [c_index, o_index])
+            self._calculate_orientation('CO', [c_index, o_index])
         elif 'CCOOOO' in self.types_molecules:
             c_indexes = self.types_mol['C_CCOOOO']
             for s in ['C_COOO', 'O_COOO', 'Li', 'K']:
                 self._determine_map('oxa', s, c_indexes)
+            self._calculate_orientation('oxa', c_indexes)
         if self.times[-1] % 50.0 == 0:
             for i, label1 in enumerate(self.types_mol):
                 for j in range(i, len(self.types_mol)):
@@ -300,6 +321,7 @@ class Carbonates(MDTraj):
         self.print_rdf(data_path)
         self.print_local_structure(data_path)
         self.print_map(data_path)
+        self.print_reorient(data_path)
         #print self.time_vs_molecule
         pass
 
