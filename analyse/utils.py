@@ -204,11 +204,12 @@ class MDTraj(object):
                 self.rdf[frozenset((label1, label2))][0] += rdf
                 self.rdf[frozenset((label1, label2))][1] += 1
 
+
     def calculate_msd(self, list_atoms):
         for atom in self.atom_list:
-            if atom.label in list_atoms:
-                if self.msd.get(atom.label) is None:
-                    self.msd[atom.label] = {
+            if atom.label_mol in list_atoms:
+                if self.msd.get(atom.label_mol) is None:
+                    self.msd[atom.label_mol] = {
                         0.0 : {
                             'distance' : 0.0,
                             'counter'  : 1,
@@ -217,13 +218,13 @@ class MDTraj(object):
                 for previous in atom.previous_pos:
                     time = previous[0]
                     vect = atom.positions - previous[1]
-                    if self.msd[atom.label].get(self.times[-1] - time) is None:
-                        self.msd[atom.label][ self.times[-1] - time] = {
+                    if self.msd[atom.label_mol].get(self.times[-1] - time) is None:
+                        self.msd[atom.label_mol][ self.times[-1] - time] = {
                             'distance' : 0.0,
                             'counter'  : 0,
                         }
-                    self.msd[atom.label][self.times[-1] - time ]['distance'] += np.linalg.norm(vect)**2
-                    self.msd[atom.label][self.times[-1] - time]['counter' ] += 1
+                    self.msd[atom.label_mol][self.times[-1] - time ]['distance'] += np.linalg.norm(vect)**2
+                    self.msd[atom.label_mol][self.times[-1] - time]['counter' ] += 1
                 atom.previous_pos.append( (self.times[-1], atom.positions) )
         #print self.msd
 

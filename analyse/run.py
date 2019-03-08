@@ -310,7 +310,7 @@ class Carbonates(MDTraj):
                     label2 = self.types_mol.keys()[j]
                     self.calculate_rdf(label1, label2)
         if self.times[-1]%50.0 == 0:
-            self.calculate_msd(['C', 'Li', 'K'])
+            self.calculate_msd(['C_CCOOOOO', 'C_COO', 'C_COOO', 'C_CO', 'O', 'C_CCOOOO', 'Li', 'K'])
         self.time_vs_molecule[self.times[-1]] = self.types_molecules
         self.time_vs_specific_molecules[self.times[-1]] = self.specific_molecules
 
