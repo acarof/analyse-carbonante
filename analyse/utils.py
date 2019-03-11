@@ -209,10 +209,9 @@ class MDTraj(object):
         for atom in self.atom_list:
             if atom.label_mol in list_atoms:
                 if not hasattr(atom, 'previous_pos'):
-                    atom.previous_pos = {
-                        atom.label_mol : []
-                    }
-
+                    atom.previous_pos = {}
+                if atom.previous_pos.get(atom.label_mol) is None:
+                    atom.previous_pos[atom.label_mol] = []
                 if self.msd.get(atom.label_mol) is None:
                     self.msd[atom.label_mol] = {
                         0.0 : {
@@ -220,18 +219,17 @@ class MDTraj(object):
                             'counter'  : 1,
                         }
                     }
-                else:
-                    for previous in atom.previous_pos[atom.label_mol]:
-                        time = previous[0]
-                        vect = atom.positions - previous[1]
-                        if self.msd[atom.label_mol].get(self.times[-1] - time) is None:
-                            self.msd[atom.label_mol][ self.times[-1] - time] = {
-                                'distance' : 0.0,
-                                'counter'  : 0,
-                            }
-                        self.msd[atom.label_mol][self.times[-1] - time ]['distance'] += np.linalg.norm(vect)**2
-                        self.msd[atom.label_mol][self.times[-1] - time]['counter' ] += 1
-                    atom.previous_pos[atom.label_mol].append( (self.times[-1], atom.positions) )
+                for previous in atom.previous_pos[atom.label_mol]:
+                    time = previous[0]
+                    vect = atom.positions - previous[1]
+                    if self.msd[atom.label_mol].get(self.times[-1] - time) is None:
+                        self.msd[atom.label_mol][ self.times[-1] - time] = {
+                            'distance' : 0.0,
+                            'counter'  : 0,
+                        }
+                    self.msd[atom.label_mol][self.times[-1] - time ]['distance'] += np.linalg.norm(vect)**2
+                    self.msd[atom.label_mol][self.times[-1] - time]['counter' ] += 1
+                atom.previous_pos[atom.label_mol].append( (self.times[-1], atom.positions) )
         #print self.msd
 
 
