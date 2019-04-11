@@ -3,6 +3,12 @@ import numpy as np
 import time
 import scipy.sparse.csgraph
 
+masses = {
+    'C' :  12.01E-3,
+    'O' : 16.00E-3,
+     'Li' : 6.94E-3,
+    'K' :  39.1E-3,
+}
 
 def new_dihedral(p0, p1, p2, p3, lbox):
     """Praxeolitic formula
@@ -204,8 +210,17 @@ class MDTraj(object):
                 self.rdf[frozenset((label1, label2))][0] += rdf
                 self.rdf[frozenset((label1, label2))][1] += 1
 
+    def calculate_com(self):
+        com = np.zeros(3)
+        mass = 0.0
+        for atom in self.atom_list:
+            com += atom.positions * masses.get(atom.label)
+            mass += masses.get(atom.label)
+        return com/mass
+
 
     def calculate_msd(self, list_atoms):
+        com = self.calculate_com()
         for atom in self.atom_list:
             if atom.label_mol in list_atoms:
                 if not hasattr(atom, 'previous_pos'):
@@ -219,9 +234,10 @@ class MDTraj(object):
                             'counter'  : 1,
                         }
                     }
+
                 for previous in atom.previous_pos[atom.label_mol]:
                     time = previous[0]
-                    vect = atom.positions - previous[1]
+                    vect = (atom.positions - com) - previous[1]
                     if self.msd[atom.label_mol].get(self.times[-1] - time) is None:
                         self.msd[atom.label_mol][ self.times[-1] - time] = {
                             'distance' : 0.0,
@@ -229,7 +245,7 @@ class MDTraj(object):
                         }
                     self.msd[atom.label_mol][self.times[-1] - time ]['distance'] += np.linalg.norm(vect)**2
                     self.msd[atom.label_mol][self.times[-1] - time]['counter' ] += 1
-                atom.previous_pos[atom.label_mol].append( (self.times[-1], atom.positions) )
+                atom.previous_pos[atom.label_mol].append( (self.times[-1], atom.positions - com) )
         #print self.msd
 
 

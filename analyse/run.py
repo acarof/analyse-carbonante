@@ -274,7 +274,7 @@ class Carbonates(MDTraj):
         self.find_connectivity_carbonates()
         self.find_molecules()
         self.name_molecules()
-        self.identify_molecule( 'COO', 'CCOOOOO')
+        self.identify_molecule( 'COO', 'CCOOOOO', 'O', 'CO', 'CCOOOO')
         self.find_types_mol()
         if 'COO' in self.types_molecules:
             self.former_c_co2 = self.types_mol['C_COO'][0]
@@ -287,6 +287,14 @@ class Carbonates(MDTraj):
             self.calculate_local_co()
         elif 'CCOOOO' in self.types_molecules:
             self.calculate_local_oxa()
+
+        if 'COOO' in self.types_molecules:
+            self.calculate_local_cooo()
+            c_index = self.types_mol['C_COOO'][0]
+            o_index = min(self.types_mol['O_COOO'][0:3])
+            for s in ['C_COOO', 'O_COOO', 'Li', 'K']:
+                self._determine_map('carb', s, [c_index, o_index])
+            self._calculate_orientation('carb', [c_index, o_index])
 
         if 'COO' in self.types_molecules:
             o_indexes = self.types_mol['O_COO']

@@ -35,8 +35,11 @@ class Carbonates_co3(Carbonates):
         self.find_types_mol()
         if 'COOO' in self.types_molecules:
             self.calculate_local_cooo()
+            print self.types_mol['C_COOO']
+            print self.types_mol['O_COOO']
             c_index = self.types_mol['C_COOO'][0]
-            o_index = min(self.types_mol['O_COOO'])
+            o_index = min(self.types_mol['O_COOO'][0:3])
+            print c_index, o_index
             for s in ['C_COOO', 'O_COOO', 'Li', 'K']:
                 self._determine_map('carb', s, [c_index, o_index])
             self._calculate_orientation('carb', [c_index, o_index])
