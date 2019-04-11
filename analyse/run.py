@@ -198,7 +198,21 @@ class Carbonates(MDTraj):
         self.local_structure['CCOOOO'].append([self.times[-1], d_cc] +
                                                d_co_s + angle_oco_s + angle_cco_s + dihedrs)
 
+    def calculate_local_cooo(self):
+        c_index = self.types_mol['C_COOO'][0]
+        o_indexes = self.types_mol['O_COOO']
 
+        angle0 = self._calculate_angle(o_indexes[0], c_index, o_indexes[1])
+        angle1 = self._calculate_angle(o_indexes[1], c_index, o_indexes[2])
+        angle2 = self._calculate_angle(o_indexes[0], c_index, o_indexes[2])
+        d_c0o = self.atom_list[c_index].distances[o_indexes[0]]
+        d_c1o = self.atom_list[c_index].distances[o_indexes[1]]
+        d_c2o = self.atom_list[c_index].distances[o_indexes[2]]
+
+        if self.local_structure.get('COOO') is None:
+            self.local_structure['COOO'] = [['Timestep', 'DistanceC-O', 'DistanceC-O', 'DistanceC-O',
+                                            'AngleO-C-O', 'AngleO-C-O', 'AngleO-C-O'],]
+        self.local_structure['COOO'].append([self.times[-1], d_c0o, d_c1o, d_c2o, angle0, angle1, angle2])
 
 
     def print_local_structure(self, data_path):
@@ -311,6 +325,7 @@ class Carbonates(MDTraj):
                     self.calculate_rdf(label1, label2)
         if self.times[-1]%50.0 == 0:
             self.calculate_msd(['C_CCOOOOO', 'C_COO', 'C_COOO', 'C_CO', 'O', 'C_CCOOOO', 'Li', 'K'])
+            #self.calculate_msd(['O_CO', 'C_CO', 'Li'])
         self.time_vs_molecule[self.times[-1]] = self.types_molecules
         self.time_vs_specific_molecules[self.times[-1]] = self.specific_molecules
 
