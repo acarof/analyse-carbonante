@@ -63,7 +63,7 @@ class atom(object):
         self.distances = []
         self.connected = []
         self.was_connected = []
-        #self.previous_pos = []
+
 
     def update_pos(self, xyz):
         self.positions = xyz
@@ -74,6 +74,7 @@ class MDTraj(object):
         self.path = path
         self.rdf = {}
         self.lbox = 0.0
+        self.previous_pos_fict = {}
 
     def calculate_properties(self):
         pass
@@ -210,13 +211,46 @@ class MDTraj(object):
                 self.rdf[frozenset((label1, label2))][0] += rdf
                 self.rdf[frozenset((label1, label2))][1] += 1
 
-    def calculate_com(self):
+    def calculate_com(self, list_ = []):
+        if list_ == []:
+            list_ = self.atom_list
         com = np.zeros(3)
         mass = 0.0
-        for atom in self.atom_list:
+        for atom in list_:
             com += atom.positions * masses.get(atom.label)
             mass += masses.get(atom.label)
         return com/mass
+
+
+    def calculate_msd_com(self, list_mol):
+        com = self.calculate_com()
+        for molecule in self.list_molecules:
+            if molecule.label in list_mol:
+                if self.previous_pos_fict.get(molecule.label) is None:
+                    self.previous_pos_fict[molecule.label] = []
+                if self.msd.get(molecule.label) is None:
+                    self.msd[molecule.label] = {
+                        0.0 : {
+                            'distance' : 0.0,
+                            'counter'  : 1,
+                        }
+                    }
+                list_previous = self.previous_pos_fict[molecule.label]
+                for previous in list_previous:
+                    time = previous[0]
+                    vect = (self.calculate_com(list_=[self.atom_list[at] for at in molecule.belongs])  - com) - previous[1]
+                    dist = np.linalg.norm(vect) ** 2
+                    if (np.sqrt(dist) > self.lbox / 2) :
+                        vect = np.array([x - self.lbox * np.rint(x / self.lbox) for x in vect])
+                        dist = np.linalg.norm(vect) ** 2
+                    if self.msd[molecule.label].get(self.times[-1] - time) is None:
+                        self.msd[molecule.label][ self.times[-1] - time] = {
+                            'distance' : 0.0,
+                            'counter'  : 0,
+                        }
+                    self.msd[molecule.label][self.times[-1] - time ]['distance'] += dist
+                    self.msd[molecule.label][self.times[-1] - time]['counter' ] += 1
+                self.previous_pos_fict[molecule.label].append( (self.times[-1], self.calculate_com(list_=[self.atom_list[at] for at in molecule.belongs]) - com) )
 
 
     def calculate_msd(self, list_atoms):
@@ -234,8 +268,8 @@ class MDTraj(object):
                             'counter'  : 1,
                         }
                     }
-
-                for previous in atom.previous_pos[atom.label_mol]:
+                list_previous = atom.previous_pos[atom.label_mol]
+                for previous in list_previous:
                     time = previous[0]
                     vect = (atom.positions - com) - previous[1]
                     if self.msd[atom.label_mol].get(self.times[-1] - time) is None:
@@ -275,7 +309,7 @@ class MDTraj(object):
                 file_.write('Time  MSD\n')
                 for time in sorted(self.msd[atom]):
                     msd = self.msd[atom][time]['distance'] / self.msd[atom][time]['counter']
-                    string = '%s  %s\n' % (time, msd)
+                    string = '%s  %s  %s\n' % (time, msd, self.msd[atom][time]['counter'])
                     file_.write(string)
 
     def print_rdf(self, data_path):

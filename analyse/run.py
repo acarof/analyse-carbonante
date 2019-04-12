@@ -8,7 +8,7 @@ except:
 try:
     frequency = int(sys.argv[2])
 except:
-    frequency = 1
+    frequency = 1000
 
 traj_path = ''
 traj_name = 'Li2CO3-K2CO3'
@@ -32,6 +32,7 @@ class Carbonates(MDTraj):
         self.map = {}
         self.former_c_co2 = -1
         self.reorient = {}
+
 
 
     def find_connectivity_carbonates(self):
@@ -332,8 +333,9 @@ class Carbonates(MDTraj):
                     label2 = self.types_mol.keys()[j]
                     self.calculate_rdf(label1, label2)
         if self.times[-1]%50.0 == 0:
-            self.calculate_msd(['C_CCOOOOO', 'C_COO', 'C_COOO', 'C_CO', 'O', 'C_CCOOOO', 'Li', 'K'])
-            #self.calculate_msd(['O_CO', 'C_CO', 'Li'])
+            self.calculate_msd(['C_COOO', 'C_CO', 'O', 'C_CCOOOO', 'Li', 'K'])
+            #self.calculate_msd(['C_COO', ])
+            self.calculate_msd_com(list_mol=['COO', 'CCOOOOO'])
         self.time_vs_molecule[self.times[-1]] = self.types_molecules
         self.time_vs_specific_molecules[self.times[-1]] = self.specific_molecules
 
