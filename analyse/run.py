@@ -8,7 +8,7 @@ except:
 try:
     frequency = int(sys.argv[2])
 except:
-    frequency = 1000
+    frequency = 1
 
 traj_path = ''
 traj_name = 'Li2CO3-K2CO3'
