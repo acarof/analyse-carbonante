@@ -306,7 +306,7 @@ class MDTraj(object):
     def print_msd(self, data_path):
         for atom in self.msd:
             with open('%s/MSD_%s.dat' % (data_path, atom), 'w') as file_:
-                file_.write('Time  MSD\n')
+                file_.write('Time  MSD   Count\n')
                 for time in sorted(self.msd[atom]):
                     msd = self.msd[atom][time]['distance'] / self.msd[atom][time]['counter']
                     string = '%s  %s  %s\n' % (time, msd, self.msd[atom][time]['counter'])
