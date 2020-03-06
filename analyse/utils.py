@@ -56,10 +56,11 @@ class Molecule(object):
         self.belongs = []
 
 class atom(object):
-    def __init__(self, label, positions):
+    def __init__(self, label, positions, forces):
         self.label = label
         self.label_mol = label
         self.positions = positions
+        self.forces = forces
         self.distances = []
         self.connected = []
         self.was_connected = []
@@ -80,21 +81,25 @@ class MDTraj(object):
         pass
 
     def analyse_timestep(self, frequency = 1):
-        with open(self.path + '.xyz') as traj:
+        with open(self.path + '.xyz') as traj, open(self.path + '.frc') as frc:
             self.atom_list = []
             natom = int(traj.readline())
+            frc.readline()
             step = 0
             pattern = "i = *[0-9]*, *time = *([0-9]*.[0-9]*)"
             self.times = [float(re.findall(pattern, traj.readline())[0])]
+            frc.readline()
             not_end = True
             while (not_end):
                 self.types = {}
                 for index in range(natom):
                     split_ = traj.readline().split()
+                    split_frc = frc.readline().split()
                     label = split_[0]
                     xyz = np.array([float(x) for x in split_[1:]])
+                    fff = np.array([float(x) for x in split_frc[1:]])
                     if len(self.atom_list) != natom:
-                        self.atom_list.append( atom(label, xyz))
+                        self.atom_list.append( atom(label, xyz, fff))
                         self.atom_list[index].distances = [0.0] * natom
                     else:
                         self.atom_list[index].update_pos(xyz)
@@ -112,6 +117,7 @@ class MDTraj(object):
                 #print "total one timestep", (end - start)
 
                 blah = traj.readline()
+                blah = frc.readline()
                 #raise SystemExit
                 if not blah:
                     not_end = False
@@ -120,6 +126,7 @@ class MDTraj(object):
                     step += 1
                     pattern = "i = *[0-9]*, *time = *([0-9]*.[0-9]*)"
                     self.times.append( float(re.findall(pattern, traj.readline())[0]))
+                    frc.readline()
         #print self.rdf
 
     def find_types_mol(self):
@@ -188,7 +195,34 @@ class MDTraj(object):
                 self.specific_molecules.append( (molecule.label, molecule.belongs) )
 
 
-
+    def calculate_rdf_forces(self, label1, label2):
+        dr = 0.1
+        nbins = int(self.lbox/(np.sqrt(2)*dr))
+        rdf = np.zeros(nbins)
+        #dr = length / nbins
+        natom_pairs = 0
+        for index1 in self.types_mol.get(label1, []):
+            for index2 in self.types_mol.get(label2, []):
+                if index1 != index2:
+                    atom1 = self.atom_list[index1]
+                    atom2 = self.atom_list[index2]
+                    vect = atom1.positions - atom2.positions
+                    vect = np.array([x - self.lbox * np.rint(x / self.lbox) for x in vect])
+                    dist = self.atom_list[index1].distances[index2]
+                    diff_forces = 0.5*(atom2.forces - atom1.forces)
+                    toadd = np.dot(vect, diff_forces) / dist**3
+                    int_ = int(dist/dr)
+                    if int_ < nbins:
+                        for k in range(int_+1):
+                            rdf[int_] += toadd
+                    natom_pairs += 1
+        if natom_pairs > 0:
+            if self.rdf.get(frozenset((label1, label2))) is None:
+                bins = dr * np.array(range(nbins))
+                self.rdf[frozenset((label1, label2))] = [rdf, 1, bins, dr,  natom_pairs]
+            else:
+                self.rdf[frozenset((label1, label2))][0] += rdf
+                self.rdf[frozenset((label1, label2))][1] += 1
 
 
     def calculate_rdf(self, label1, label2):

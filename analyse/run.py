@@ -256,7 +256,6 @@ class Carbonates(MDTraj):
         vol = (2*np.pi*dr**3*np.arange(1, nbins+1, 1))[:, np.newaxis]
         for mol in self.map:
             for label in self.map[mol]:
-                print mol, label
                 self.map[mol][label] = self.map[mol][label]/vol
 
     def _calculate_orientation(self, label, indexes):
@@ -336,7 +335,8 @@ class Carbonates(MDTraj):
             for i, label1 in enumerate(self.types_mol):
                 for j in range(i, len(self.types_mol)):
                     label2 = self.types_mol.keys()[j]
-                    self.calculate_rdf(label1, label2)
+                    #self.calculate_rdf(label1, label2)
+                    self.calculate_rdf_forces(label1, label2)
         if self.times[-1]%50.0 == 0:
             self.calculate_msd(['C_COOO', 'C_CO', 'O', 'C_CCOOOO', 'Li', 'K'])
             #self.calculate_msd(['C_COO', ])
