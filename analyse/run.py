@@ -253,6 +253,11 @@ class Carbonates(MDTraj):
             zeta_bin = int( np.rint( np.dot(u, pos) / dr ) )
             if (rho_bin < nbins) and  (0 < zeta_bin + int(np.rint(nbins/2)) < nbins) :
                 self.map[mol][label][rho_bin, zeta_bin + int(np.rint(nbins/2))] += 1
+        vol = (2*np.pi*dr**3*np.arange(1, nbins+1, 1))[:, np.newaxis]
+        for mol in self.map:
+            for label in self.map[mol]:
+                print mol, label
+                self.map[mol][label] = self.map[mol][label]/vol
 
     def _calculate_orientation(self, label, indexes):
         u = (self.atom_list[indexes[0]].positions - self.atom_list[indexes[1]].positions)
