@@ -81,7 +81,7 @@ class MDTraj(object):
         pass
 
     def analyse_timestep(self, frequency = 1):
-        with open(self.path + '.xyz') as traj, open(self.path + '.frc') as frc:
+        with open(self.path + '.xyz') as traj, open(self.path + '.force') as frc:
             self.atom_list = []
             natom = int(traj.readline())
             frc.readline()
@@ -203,18 +203,18 @@ class MDTraj(object):
         natom_pairs = 0
         for index1 in self.types_mol.get(label1, []):
             for index2 in self.types_mol.get(label2, []):
-                if index1 != index2:
+                if index1 < index2:
                     atom1 = self.atom_list[index1]
                     atom2 = self.atom_list[index2]
-                    vect = atom1.positions - atom2.positions
+                    vect = atom2.positions - atom1.positions
                     vect = np.array([x - self.lbox * np.rint(x / self.lbox) for x in vect])
                     dist = self.atom_list[index1].distances[index2]
                     diff_forces = 0.5*(atom2.forces - atom1.forces)
-                    toadd = np.dot(vect, diff_forces) / dist**3
+                    toadd = np.dot(vect, diff_forces) / (dist**3)
                     int_ = int(dist/dr)
                     if int_ < nbins:
                         for k in range(int_+1):
-                            rdf[int_] += toadd
+                            rdf[k] += toadd
                     natom_pairs += 1
         if natom_pairs > 0:
             if self.rdf.get(frozenset((label1, label2))) is None:
@@ -345,6 +345,24 @@ class MDTraj(object):
                     msd = self.msd[atom][time]['distance'] / self.msd[atom][time]['counter']
                     string = '%s  %s  %s\n' % (time, msd, self.msd[atom][time]['counter'])
                     file_.write(string)
+
+    def print_rdf_force(self, data_path):
+        for pair in self.rdf:
+            title = pair
+            if len(pair) == 1:
+                title = tuple(pair) * 2
+            with open('%s/RDF_%s.dat' % (data_path, '_'.join(title)), 'w') as f:
+                f.write('R   RDF\n')
+                rdf = self.rdf[pair][0]
+                count = self.rdf[pair][1]
+                distance = self.rdf[pair][2]
+                dr = self.rdf[pair][3]
+                natom_pair = self.rdf[pair][4]
+                eps = self.lbox**3 / (count * 4*np.pi * natom_pair )
+                rdf = - eps*rdf
+                for (r, val) in zip(distance, rdf):
+                    f.write('%s   %s\n' % (r, val))
+
 
     def print_rdf(self, data_path):
         for pair in self.rdf:
