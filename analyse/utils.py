@@ -213,7 +213,7 @@ class MDTraj(object):
                     toadd = np.dot(vect, diff_forces) / (dist**3)
                     int_ = int(dist/dr)
                     if int_ < nbins:
-                        for k in range(int_+1):
+                        for k in range(int_, nbins):
                             rdf[k] += toadd
                     natom_pairs += 1
         if natom_pairs > 0:
