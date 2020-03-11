@@ -203,7 +203,7 @@ class MDTraj(object):
         natom_pairs = 0
         for index1 in self.types_mol.get(label1, []):
             for index2 in self.types_mol.get(label2, []):
-                if index1 < index2:
+                if index1 != index2:
                     atom1 = self.atom_list[index1]
                     atom2 = self.atom_list[index2]
                     vect = atom2.positions - atom1.positions
