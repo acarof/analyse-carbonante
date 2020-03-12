@@ -341,8 +341,8 @@ class Carbonates(MDTraj):
             for i, label1 in enumerate(self.types_mol):
                 for j in range(i, len(self.types_mol)):
                     label2 = self.types_mol.keys()[j]
-                    #self.calculate_rdf(label1, label2)
-                    self.calculate_rdf_forces(label1, label2)
+                    self.calculate_rdf(label1, label2)
+                    #self.calculate_rdf_forces(label1, label2)
         if self.times[-1]%50.0 == 0:
             self.calculate_msd(['C_COOO', 'C_CO', 'O', 'C_CCOOOO', 'Li', 'K'])
             #self.calculate_msd(['C_COO', ])
@@ -354,8 +354,8 @@ class Carbonates(MDTraj):
         self.print_kind_molecules(data_path)
         self.print_specific_molecules(data_path)
         self.print_msd(data_path)
-        #self.print_rdf(data_path)
-        self.print_rdf_force(data_path)
+        self.print_rdf(data_path)
+        #self.print_rdf_force(data_path)
         self.print_local_structure(data_path)
         self.print_map(data_path)
         self.print_reorient(data_path)
