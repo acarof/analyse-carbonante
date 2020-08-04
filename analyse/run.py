@@ -12,6 +12,8 @@ except:
 
 traj_path = ''
 traj_name = 'Li2CO3-K2CO3'
+#traj_name = 'CO2-pos-1'
+#name = "co2"
 data_path = 'data-%s' % name
 
 #properties = ['index-co2']
@@ -19,7 +21,6 @@ data_path = 'data-%s' % name
 
 if not os.path.isdir(data_path):
     os.mkdir(data_path)
-
 class Carbonates(MDTraj):
 
     def __init__(self, path):

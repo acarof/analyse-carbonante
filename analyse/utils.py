@@ -339,6 +339,7 @@ class MDTraj(object):
 
     def print_msd(self, data_path):
         for atom in self.msd:
+            #print self.msd[atom]
             with open('%s/MSD_%s.dat' % (data_path, atom), 'w') as file_:
                 file_.write('Time  MSD   Count\n')
                 for time in sorted(self.msd[atom]):
