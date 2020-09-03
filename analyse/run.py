@@ -200,6 +200,19 @@ class Carbonates(MDTraj):
         self.local_structure['CCOOOO'].append([self.times[-1], d_cc] +
                                                d_co_s + angle_oco_s + angle_cco_s + dihedrs)
 
+    def calculate_local_o(self):
+        index_o = self.types_mol['O'][0]
+        radius = 3.0
+        local_index = [i for i in self.types_mol['Li'] if self.atom_list[index_o].distances[i] < radius]
+        if self.local_structure.get('O') is None:
+            self.local_structure['O'] = [['Timestep',] +  ['Li1',]
+                                         +  ['Li2',] + ['AngleLi-O-Li',]]
+        for i1, li1 in enumerate(local_index):
+            for i2 in range(i1+1, len(local_index)):
+                li2 = local_index[i2]
+                self.local_structure['O'].append([self.times[-1],
+                    li1, li2, self._calculate_angle(li1, index_o, li2)])
+
     def calculate_local_cooo(self):
         c_index = self.types_mol['C_COOO'][0]
         o_indexes = self.types_mol['O_COOO']
@@ -299,6 +312,8 @@ class Carbonates(MDTraj):
             self.calculate_local_co()
         elif 'CCOOOO' in self.types_molecules:
             self.calculate_local_oxa()
+        elif 'O' in self.types_molecules:
+            self.calculate_local_o()
 
         if 'COOO' in self.types_molecules:
             self.calculate_local_cooo()
