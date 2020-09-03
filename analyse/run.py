@@ -242,7 +242,7 @@ class Carbonates(MDTraj):
         vol = (2*np.pi*dr**3*np.arange(1, nbins+1, 1))[:, np.newaxis]
         for mol in self.map:
             for label in self.map[mol]:
-                print mol, label
+                #print mol, label
                 #print self.map[mol][label]
                 self.map[mol][label] = self.map[mol][label]/vol
                 #print self.map[mol][label]
