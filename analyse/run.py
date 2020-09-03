@@ -202,16 +202,17 @@ class Carbonates(MDTraj):
 
     def calculate_local_o(self):
         index_o = self.types_mol['O'][0]
-        radius = 3.0
-        local_index = [i for i in self.types_mol['Li'] if self.atom_list[index_o].distances[i] < radius]
-        if self.local_structure.get('O') is None:
-            self.local_structure['O'] = [['Timestep',] +  ['Li1',]
-                                         +  ['Li2',] + ['AngleLi-O-Li',]]
-        for i1, li1 in enumerate(local_index):
-            for i2 in range(i1+1, len(local_index)):
-                li2 = local_index[i2]
-                self.local_structure['O'].append([self.times[-1],
-                    li1, li2, self._calculate_angle(li1, index_o, li2)])
+        radius_list = [2.0, 2.25, 2.5, 2.75, 3.0, 3.25, 3.5, 3.75, 4.0]
+        for radius in radius_list:
+            local_index = [i for i in self.types_mol['Li'] if self.atom_list[index_o].distances[i] < radius]
+            if self.local_structure.get('O-%s' % radius) is None:
+                self.local_structure['O-%s' % radius] = [['Timestep',] +  ['Li1',]
+                                             +  ['Li2',] + ['AngleLi-O-Li',]]
+            for i1, li1 in enumerate(local_index):
+                for i2 in range(i1+1, len(local_index)):
+                    li2 = local_index[i2]
+                    self.local_structure['O-%s' % radius].append([self.times[-1],
+                        li1, li2, self._calculate_angle(li1, index_o, li2)])
 
     def calculate_local_cooo(self):
         c_index = self.types_mol['C_COOO'][0]
