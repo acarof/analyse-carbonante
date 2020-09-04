@@ -203,16 +203,38 @@ class Carbonates(MDTraj):
     def calculate_local_o(self):
         index_o = self.types_mol['O'][0]
         radius_list = [2.0, 2.25, 2.5, 2.75, 3.0, 3.25, 3.5, 3.75, 4.0]
-        for radius in radius_list:
-            local_index = [i for i in self.types_mol['Li'] if self.atom_list[index_o].distances[i] < radius]
-            if self.local_structure.get('O-%s' % radius) is None:
-                self.local_structure['O-%s' % radius] = [['Timestep',] +  ['Li1',]
-                                             +  ['Li2',] + ['AngleLi-O-Li',]]
-            for i1, li1 in enumerate(local_index):
-                for i2 in range(i1+1, len(local_index)):
-                    li2 = local_index[i2]
-                    self.local_structure['O-%s' % radius].append([self.times[-1],
-                        li1, li2, self._calculate_angle(li1, index_o, li2)])
+        radius_list_li = [3.1]
+        radius_list_k = [3.6]
+        for radius_li in radius_list_li:
+            for radius_k in radius_list_k:
+                local_index_li = [i for i in self.types_mol['Li'] if self.atom_list[index_o].distances[i] < radius_li]
+                local_index_k = [i for i in self.types_mol['K'] if self.atom_list[index_o].distances[i] < radius_k]
+                label = 'O-Li-%s-Li-%s' % (radius_li, radius_li)
+                if self.local_structure.get(label) is None:
+                    self.local_structure[label] = [['Timestep',] +  ['Li1',]
+                                                 +  ['Li2',] + ['AngleLi-O-Li',]]
+                for i1, li1 in enumerate(local_index_li):
+                    for i2 in range(i1+1, len(local_index_li)):
+                        li2 = local_index_li[i2]
+                        self.local_structure[label].append([self.times[-1],
+                            li1, li2, self._calculate_angle(li1, index_o, li2)])
+                label = 'O-K-%s-K-%s' % (radius_k, radius_k)
+                if self.local_structure.get(label) is None:
+                    self.local_structure[label] = [['Timestep',] +  ['K1',]
+                                                 +  ['K2',] + ['AngleK-O-K',]]
+                for i1, li1 in enumerate(local_index_k):
+                    for i2 in range(i1+1, len(local_index_k)):
+                        li2 = local_index_k[i2]
+                        self.local_structure[label].append([self.times[-1],
+                            li1, li2, self._calculate_angle(li1, index_o, li2)])
+                label = 'O-Li-%s-K-%s' % (radius_li, radius_k)
+                if self.local_structure.get(label) is None:
+                    self.local_structure[label] = [['Timestep',] +  ['Li1',]
+                                                 +  ['K2',] + ['AngleLi-O-K',]]
+                for i1, li1 in enumerate(local_index_li):
+                    for i2, li2 in enumerate(local_index_k):
+                        self.local_structure[label].append([self.times[-1],
+                            li1, li2, self._calculate_angle(li1, index_o, li2)])
 
     def calculate_local_cooo(self):
         c_index = self.types_mol['C_COOO'][0]
